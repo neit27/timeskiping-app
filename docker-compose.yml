@@ -1,0 +1,56 @@
+# docker-compose.yml
+version: "3.8"
+services:
+  nginx:
+    container_name: tskp_nginx
+    build: ./docker/nginx
+    command: nginx -g "daemon off;"
+    links:
+      - php
+    ports:
+      - "8083:80"
+    volumes:
+      - ./logs/nginx:/var/log/nginx
+      - ./src/tskp:/var/www/html/tskp
+  php:
+    container_name: tskp_php
+    build: ./docker/php
+    links:
+      - mysql
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./src/tskp:/var/www/html/tskp
+    working_dir: /var/www/html/tskp
+  composer:
+    container_name: tskp_composer
+    image: composer/composer
+    volumes:
+      - ./src/tskp:/var/www/html/tskp
+    working_dir: /var/www/html/tskp
+    command: install
+  mysql:
+    image: mysql:8.0.27
+    container_name: tskp_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: pass
+      MYSQL_DATABASE: DB_tskp
+      MYSQL_USER: username_tskp
+      MYSQL_PASSWORD: pass
+    ports:
+      - "33062:3306"
+    volumes:
+      - ./database/mysql:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: tskp_pma
+    links:
+      - mysql
+    environment:
+      # MYSQL_USERNAME: "${DB_USERNAME}"
+      # MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
+      PMA_HOST: tskp_mysql
+    restart: always
+    ports:
+      - 8085:80
